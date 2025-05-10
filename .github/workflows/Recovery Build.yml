@@ -62,13 +62,11 @@ jobs:
         echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
  
-    # You might want to Checkout your repo first, but not mandatory
     - name: Check Out
       uses: actions/checkout@v4
-    # Cleanup The Actions Workspace Using Custom Composite Run Actions
+
     - name: Cleanup
       uses: rokibhasansagar/slimhub_actions@main
-      # That's it! Now use your normal steps
 
     - name: Prepare the environment
       run: |
@@ -94,7 +92,7 @@ jobs:
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
-      
+
     - name: Initialize repo
       run: |
         mkdir workspace
@@ -109,7 +107,7 @@ jobs:
       run: |
         repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune --force-sync -j$(nproc --all)
       working-directory: workspace
-      
+
     - name: Clone device tree
       run: |
         git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
@@ -143,6 +141,13 @@ jobs:
       with:
         swap-size-gb: 12
 
+    # New step to update PLATFORM_VERSION in version_defaults.mk
+    - name: Update PLATFORM_VERSION in version_defaults.mk
+      run: |
+        VERSION="16.1.0"
+        sed -i "s/^PLATFORM_VERSION := .*/PLATFORM_VERSION := $VERSION/" build/core/version_defaults.mk
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+    
     - name: Building recovery
       run: |
         source build/envsetup.sh
